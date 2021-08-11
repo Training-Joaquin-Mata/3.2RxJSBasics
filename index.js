@@ -1,68 +1,172 @@
-import { of, from, interval, timer, range ,Observable, fromEvent, asyncScheduler, asapScheduler} from 'rxjs';
-import { map } from 'rxjs/operators'
+import { of, fromEvent, from, interval } from 'rxjs';
+import { map,tap, pluck, mapTo, filter, reduce, take, scan, count} from 'rxjs/operators'
 
-//#region Create Observables from dom events using from event
+//#region Transform streams using map, pluck, and mapTo
 
-// const observer = {
-//     next: vale => console.log(vale),
-//     error: err => console.log(err),
-//     complete: () => console.log('Complete!')
+// of(1,2,3,4,5).pipe(
+//     map(value=> value*10)
+// ).subscribe(console.log)
+
+// const keyUp$ = fromEvent(document, "keyup");
+
+// const keycode$ = keyUp$.pipe(
+//     map(event => event.code)
+// ); 
+
+// const keycodeWPluck$ = keyUp$.pipe(
+//     pluck('code')
+// );
+
+// keycode$.subscribe(console.log);
+
+// keycodeWPluck$.subscribe(console.log);
+
+
+// const press$ = keyUp$.pipe(
+//     mapTo('Key Pressed!')
+// )
+
+// press$.subscribe(console.log);
+//#endregion
+
+
+//#region Ignore unneeded values with filter
+// // of(1,2,3,4,5).pipe(
+// // filter(value=> value>2)
+// // ).subscribe(console.log)
+
+
+// const keyup$ = fromEvent(document, 'keyup');
+
+// const keycode$ = keyup$.pipe(
+//     map(event => event.code)
+// );
+
+
+// const enter$ = keycode$.pipe(
+//     filter(code => code === 'Enter')
+//   );
+
+// enter$.subscribe(console.log);
+
+// keycode$.subscribe(console.log);
+//#endregion
+
+//#region Lab 1. Create a scroll progress bar with fromEvent and Map
+
+//helpers
+// function calculateScrollPercent(element){
+    
+//     const{scrollTop, scrollHeight, clientHeight}= element;
+//     return (scrollTop / (scrollHeight-clientHeight))*100;
+  
 // }
 
-// const source$ = fromEvent(document, 'click');
+// //streams 
 
-// const subOne = source$.subscribe(observer);
+// const scroll$ = fromEvent(document,  'scroll');
+// const progress$ = scroll$.pipe(
+//  //percent progress
+//     map(({target}) => calculateScrollPercent(target.documentElement))
+// )
 
-// const subTwo = source$.subscribe(observer);
 
-
-// setTimeout(()=>{
-//     console.log("Unsubscribing...");
-//     subOne.unsubscribe();
-// }, 4000);
+// progress$.subscribe(console.log)
 
 //#endregion
 
-//#region Create observables from static values using of
+//#region Accumulate data over time using reduce
 
-// const observer = {
-//     next: val => console.log("next: "+ val),
-//     error: err => console.log(err),
-//     complete: () => console.log('Complete!')
-// }
+// const numbers = [1,2,3,4,5];
 
-// const source$ = of([1,2],3,4,5)  
-// const subOne = source$.subscribe(observer);
+// const totalReducer = (accumulator, currentValue)=>{
+//     return accumulator + currentValue;
+// };
 
-
-// const source2$ = range(1, 5);
-// source2$.subscribe(observer);
+// from(numbers).pipe(
+//     take(3),
+//     reduce(totalReducer, 0)
+// ).subscribe(
+//     console.log,
+//     null,
+//     ()=>console.log("Complete!")
+//     )
 
 //#endregion
 
-//#region Turn arrays, iterators, and promises into observables using from
 
-// const observer = {
-//     next: val => console.log('next', val),
-//     error: err => console.log(err),
-//     complete: () => console.log('Complete!')
-// }
+//#region  Manage state changes incrementally with scan
 
-// const values = [1,2,3,4,5]
-// const source$ = from(fetch(
-//     'https://api.github.com/users/octocat'
-// ));
-// source$.subscribe(observer);
+// const numbers= [1,2,3,4,5];
+
+// const user = [
+//     {name: 'joaquin', loggedIn: false, token: null},
+//     {name: 'joaquin', loggedIn: true, token: 'abc'},
+//     {name: 'joaquin', loggedIn: true, token: '123'}
+// ]
+
+// const state$ = from(user).pipe(
+//     scan((accumulator, currentvalue)=>{
+//         return {...accumulator, ...currentvalue};
+//     },{ })
+// )
+
+// const name$ = state$.pipe(
+//    map(state=> state.name) 
+// );
+
+// name$.subscribe(
+//     console.log,
+//     null,
+//     ()=> console.log('Complete!')
+// )
+
 //#endregion
 
-//#region Emit items based on a duration with interval and timer
 
-// // const timer$ = interval(1000);
+//#region Lab 2. Create a countdown tiumer
 
-// //timer$.subscribe(console.log)
+// const countdown = document.getElementById('countdown');
 
-// const timer$ = timer(2000, 1000);
+// const message = document.getElementById('message');
 
-// timer$.subscribe(console.log)
+
+// const counter$ = interval(1000);
+
+// counter$.pipe(
+//     mapTo(-1),
+//     scan((accumulator, current)=>{
+//         return accumulator + current;
+//     }, 10),
+//     filter(value => value>=0),
+    
+// ).subscribe(
+//     value =>{
+//         countdown.innerHTML = value;
+//         if(!value){
+//             message.innerHTML = "LiftOff";
+//         }
+//     }
+
+// );
+
+
+
+
+//#endregion 
+
+
+
+//#region  Debug your observable streams with tap
+
+const numbers$ = of(1,2,3,4,5);
+
+numbers$.pipe(
+    tap(value => console.log(`Values before map: ${value}`)), 
+    map(value => value*10 ),
+    tap(value => console.log(`Values after map: ${value}`)), 
+).subscribe(value=>{
+    console.log(`Values from subscriber: ${value}`)
+});
 
 //#endregion
